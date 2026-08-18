@@ -26,7 +26,24 @@ else
     echo "релиз $VER создан"
 fi
 
-# npm — второе зеркало: публикация сразу даёт CDN unpkg и jsDelivr
+# своё зеркало: файлы едут на PVE и оттуда в контейнер сайта.
+# Каталог лежит в /srv/wheel, а не в корне сайта: деплой сайта очищает его целиком.
+KEY="${HOMELAB_KEY:-$HOME/.ssh/homelab_ed25519}"
+PVE="${HOMELAB_PVE:-root@192.168.1.20}"
+if [ -r "$KEY" ] && scp -q -i "$KEY" -o ConnectTimeout=8 -o StrictHostKeyChecking=no \
+        "$DIST/catalog.jsonl.gz" "$DIST/manifest.json" "$PVE":/tmp/ 2> /dev/null; then
+    ssh -i "$KEY" -o StrictHostKeyChecking=no "$PVE" '
+        for f in catalog.jsonl.gz manifest.json; do
+            pct push 163 /tmp/$f /srv/wheel/$f --perms 644
+            rm -f /tmp/$f
+        done
+        pct exec 163 -- chown www-data:www-data /srv/wheel/catalog.jsonl.gz /srv/wheel/manifest.json
+    ' && echo "своё зеркало обновлено: kukuruza.kalpak.dev/wheel"
+else
+    echo "своё зеркало пропущено: нет доступа к $PVE"
+fi
+
+# npm — ещё одно зеркало: публикация сразу даёт CDN unpkg и jsDelivr
 if npm whoami > /dev/null 2>&1; then
     TMP=$(mktemp -d)
     trap 'rm -rf "$TMP"' EXIT
