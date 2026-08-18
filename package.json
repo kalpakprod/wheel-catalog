@@ -1,0 +1,23 @@
+{
+  "name": "@kalpakprod/wheel-catalog",
+  "version": "0.0.0",
+  "description": "Каталог проектов для плагина wheel: готовые решения, найденные до написания кода",
+  "license": "MIT",
+  "author": "kalpakprod",
+  "homepage": "https://github.com/kalpakprod/wheel-catalog",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kalpakprod/wheel-catalog.git"
+  },
+  "keywords": [
+    "wheel",
+    "claude-code",
+    "catalog",
+    "dataset"
+  ],
+  "files": [
+    "catalog.jsonl.gz",
+    "manifest.json",
+    "README.md"
+  ]
+}
