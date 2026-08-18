@@ -49,7 +49,7 @@ jobs:
         run: |
           # версия равна дате сборки, поэтому вторая публикация за день упирается
           # в уже занятый номер: это не сбой, зеркало обновится следующим релизом
-          V=$(node -p "require(./package.json).version")
+          V=$(sed -n 's/.*"version": "\([^"]*\)".*//p' package.json | head -1)
           if npm view "@kalpakprod/wheel-catalog@$V" version > /dev/null 2>&1; then
             echo "версия $V уже опубликована, пропускаем"
             echo "skip=true" >> "$GITHUB_OUTPUT"
