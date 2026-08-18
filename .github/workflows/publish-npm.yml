@@ -46,14 +46,16 @@ jobs:
 
       - name: пропустить, если версия уже в реестре
         id: check
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           # версия равна дате сборки, поэтому вторая публикация за день упирается
           # в уже занятый номер: это не сбой, зеркало обновится следующим релизом
-          V=$(sed -n 's/.*"version": "\([^"]*\)".*//p' package.json | head -1)
-          if npm view "@kalpakprod/wheel-catalog@$V" version > /dev/null 2>&1; then
-            echo "версия $V уже опубликована, пропускаем"
+          if npm view "@kalpakprod/wheel-catalog@$TAG" version > /dev/null 2>&1; then
+            echo "версия $TAG уже опубликована, пропускаем"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - if: steps.check.outputs.skip != true
+      - name: публикация
+        if: steps.check.outputs.skip != 'true'
         run: npm publish --access public --provenance
