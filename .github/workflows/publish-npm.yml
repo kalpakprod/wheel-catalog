@@ -1,0 +1,47 @@
+# Зеркало каталога в npm: оттуда его бесплатно раздают unpkg и jsDelivr.
+# Публикуем через trusted publishing (OIDC): долгоживущие токены npm с обходом 2FA
+# теряют право публиковать напрямую, см. github.blog за 2026-07-08.
+name: publish-npm
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: тег релиза, который зеркалим
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - name: npm посвежее
+        run: npm install -g npm@latest   # OIDC требует npm 11.5.1+
+
+      - name: забрать артефакты релиза
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --pattern catalog.jsonl.gz --pattern manifest.json --clobber
+          test -s catalog.jsonl.gz && test -s manifest.json
+
+      - name: версия пакета из тега
+        env:
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: npm version "$TAG" --no-git-tag-version --allow-same-version
+
+      - run: npm publish --access public --provenance

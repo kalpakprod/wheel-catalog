@@ -43,14 +43,7 @@ else
     echo "своё зеркало пропущено: нет доступа к $PVE"
 fi
 
-# npm — ещё одно зеркало: публикация сразу даёт CDN unpkg и jsDelivr
-if npm whoami > /dev/null 2>&1; then
-    TMP=$(mktemp -d)
-    trap 'rm -rf "$TMP"' EXIT
-    cp "$DIST/catalog.jsonl.gz" "$DIST/manifest.json" "$HERE/README.md" "$TMP/"
-    sed "s/\"version\": \"[^\"]*\"/\"version\": \"$VER\"/" "$HERE/package.json" > "$TMP/package.json"
-    (cd "$TMP" && npm publish --access public)
-    echo "npm-зеркало обновлено: $VER"
-else
-    echo "npm: не залогинен, зеркало пропущено (npm login)"
-fi
+# npm-зеркало публикует workflow publish-npm.yml по событию release: долгоживущие
+# токены npm с обходом 2FA теряют право публиковать напрямую, а OIDC из Actions токенов
+# не требует вовсе. Локально ничего публиковать не нужно.
+echo "npm-зеркало: публикуется из GitHub Actions по этому релизу"
