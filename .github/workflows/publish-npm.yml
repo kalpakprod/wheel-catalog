@@ -44,4 +44,16 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: npm version "$TAG" --no-git-tag-version --allow-same-version
 
-      - run: npm publish --access public --provenance
+      - name: пропустить, если версия уже в реестре
+        id: check
+        run: |
+          # версия равна дате сборки, поэтому вторая публикация за день упирается
+          # в уже занятый номер: это не сбой, зеркало обновится следующим релизом
+          V=$(node -p "require(./package.json).version")
+          if npm view "@kalpakprod/wheel-catalog@$V" version > /dev/null 2>&1; then
+            echo "версия $V уже опубликована, пропускаем"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.check.outputs.skip != true
+        run: npm publish --access public --provenance
